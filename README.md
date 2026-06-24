@@ -67,7 +67,9 @@ An ArgoCD root Application controller registers and watches the target repositor
 
 ### 1. Terraform Infrastructure Provisioning (`terraform-bootstrap/main.tf`)
 
-This file is maintained inside the `terraform-bootstrap/` directory of this repository. Because ArgoCD is explicitly configured to isolate its tracking path to the `apps/` directory, the Terraform infrastructure bootstrapping assets safely coexist within the same repository without interfering with the live GitOps continuous reconciliation loop.
+This file is maintained inside the `terraform-bootstrap/` directory of this repository. 
+
+Because ArgoCD is explicitly configured to isolate its tracking path to the `apps/` directory, the Terraform infrastructure bootstrapping assets safely coexist within the same repository without interfering with the live GitOps continuous reconciliation loop.
 
 ```hcl
 terraform {
