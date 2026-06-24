@@ -327,3 +327,47 @@ curl -k -u elastic:$PASSWORD "https://localhost:9200/_cluster/health?pretty"
 ```
 
 *(Note: An internal status of `"yellow"` is the perfectly optimized target state for a single-node local environment. It simply indicates that primary data shards are active and healthy, but index replication loops are safely unassigned due to the lack of secondary hardware instances).*
+
+
+## 🛑 Teardown: Pausing vs. Full SRE Clean Up
+
+Depending on whether you want to save your progress for later or completely purge the local sandbox environment from your machine, choose one of the following teardown patterns:
+
+### Option A: Pausing the Environment (Preserve State)
+
+If you want to free up your host machine's CPU and RAM right now but want to keep your Elasticsearch data indices, cluster configurations, and ArgoCD states completely intact for next time:
+
+```bash
+minikube stop
+```
+
+* **To Resume Later:** Simply execute `minikube start`. You **do not** need to re-run your Terraform or bootstrap manifests. The persistent disk states will mount automatically, and the ECK and ArgoCD control loops will self-heal back to a running green status within a couple of minutes.
+
+### Option B: The Full SRE Tear Down (Destructive Purge)
+
+If you are completely finished with this sandbox iteration and want to cleanly wipe out every resource, helm release, data volume, and namespace from your local machine, execute this exact structural teardown sequence:
+
+#### 1. Sever the GitOps Link First
+
+Instruct ArgoCD to stop tracking your tracking repository. This gracefully deletes the root application controller and cascades down to clean up the Elasticsearch workloads and local storage volumes cleanly:
+
+```bash
+kubectl delete -f root-application.yaml
+```
+
+#### 2. Execute Terraform Infrastructure Destruction
+
+Navigate to your isolated bootstrap directory and allow Terraform to cleanly unprovision the infrastructure orchestrators (ArgoCD and the ECK Operator Helm configurations) and system namespaces:
+
+```bash
+cd terraform-bootstrap/
+terraform destroy -auto-approve
+```
+
+#### 3. Erase the Cluster Node State
+
+Finally, completely destroy the local Minikube virtual machine/container engine profile to wipe out any remaining cache lines or host-path disk allocations:
+
+```bash
+minikube delete
+```
