@@ -1,4 +1,6 @@
-# Local Kubernetes GitOps Sandbox (ECK + ArgoCD + Terraform)
+# eck-gitops-infra
+
+## Local Kubernetes GitOps Sandbox (ECK + ArgoCD + Terraform)
 
 A declarative, production-patterned infrastructure platform blueprint that provisions a localized Kubernetes GitOps playground using **Terraform**, **ArgoCD**, and **Elastic Cloud on Kubernetes (ECK)** on a single-node **Minikube** cluster.
 
