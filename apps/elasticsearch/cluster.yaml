@@ -4,20 +4,22 @@ metadata:
   name: internal-search
   namespace: elastic-system
 spec:
-  version: 9.0.0
+  version: 8.12.0
   nodeSets:
   - name: master-data
     count: 1
+    # Crucial Node Configuration Level
     config:
       node.roles: ["master", "data", "ingest"]
-      esConfig:
-        jvm.options: |
-          -Xms1.5g
-          -Xmx1.5g
+    # This block must sit at the nodeSet level, parallel to config
     podTemplate:
       spec:
         containers:
         - name: elasticsearch
+          env:
+          # The native ECK operator way to inject custom JVM properties safely
+          - name: ES_JAVA_OPTS
+            value: "-Xms1536m -Xmx1536m"
           resources:
             requests:
               memory: 2Gi
