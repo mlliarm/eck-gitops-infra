@@ -4,7 +4,7 @@ metadata:
   name: internal-search
   namespace: elastic-system
 spec:
-  version: 8.12.0
+  version: 9.0.0
   nodeSets:
   - name: master-data
     count: 1
