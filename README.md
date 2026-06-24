@@ -259,3 +259,71 @@ kubectl delete service internal-search-es-http -n elastic-system
 1. ArgoCD's background application loops flag a drift divergence instantly against the tracking commit.
 2. The controller blocks out the out-of-band mutation and forcefully regenerates the deleted configuration objects.
 3. The cluster automatically self-heals back to the immutable configuration state defined within your Git repository.
+
+Here is the updated Markdown snippet to add directly to the bottom of your `README.md`. It documents the cluster verification steps using both the fast Kubernetes Custom Resource layer and the native Elastic HTTP API.
+
+
+## 📊 Verification: Checking Cluster & Node Health
+
+Once the cluster has successfully reconciled, you can monitor and verify the health of the stateful Elasticsearch nodes using either the Kubernetes abstraction layer or by hitting the native Elastic cluster APIs directly.
+
+### Method 1: The Fast Kubernetes Check
+The ECK Operator continuously aggregates internal cluster health status directly up to the Custom Resource Definition (CRD) status block. View it instantly with:
+```bash
+kubectl get elasticsearch -n elastic-system
+
+```
+
+* **Expected Output:** The `HEALTH` column should read `green` or `yellow` (yellow is standard for single-node sandboxes because there are no secondary nodes to house index replicas), with `NODES` at `1/1`.
+
+### Method 2: Querying the Native Elasticsearch HTTP API
+
+For comprehensive structural cluster metrics, query the native `/_cluster/health` API endpoint directly from your host terminal.
+
+#### 1. Establish the Network Bridge
+
+Open a port-forwarding channel to expose the cluster's internal secure HTTPS service to your local host (keep this running):
+
+```bash
+kubectl port-forward svc/internal-search-es-http -n elastic-system 9200:9200
+
+```
+
+#### 2. Extract and Decode the Admin Credentials
+
+In a separate terminal window, extract the automatically managed `elastic` user bootstrap password from its Kubernetes secret store:
+
+```bash
+PASSWORD=$(kubectl get secret internal-search-es-elastic-user -n elastic-system -o jsonpath="{.data.elastic}" | base64 -d)
+
+```
+
+#### 3. Execute the API Query
+
+Run a `curl` request against your local socket. The `-k` flag tells curl to bypass verification of the operator's self-signed TLS certificates:
+
+```bash
+curl -k -u elastic:$PASSWORD "https://localhost:9200/_cluster/health?pretty"
+
+```
+
+#### Expected Telemetry Object:
+
+```json
+{
+  "cluster_name" : "internal-search",
+  "status" : "yellow",
+  "timed_out" : false,
+  "number_of_nodes" : 1,
+  "number_of_data_nodes" : 1,
+  "active_primary_shards" : 1,
+  "active_shards" : 1,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 1,
+  "number_of_pending_tasks" : 0
+}
+
+```
+
+*(Note: An internal status of `"yellow"` is the perfectly optimized target state for a single-node local environment. It simply indicates that primary data shards are active and healthy, but index replication loops are safely unassigned due to the lack of secondary hardware instances).*
